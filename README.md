@@ -1,6 +1,4 @@
-# $crypt Framework
-
-> *"From the void, we shape the signal"*
+# $Crypt Framework
 
 [![License: BSD-3-Clause](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
 
