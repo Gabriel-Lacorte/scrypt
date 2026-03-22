@@ -1,0 +1,19 @@
+[package]
+name = "sc-mesh"
+description = "$crypt distributed analysis via gRPC mesh networking"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+sc-core = { workspace = true }
+sc-protocol = { workspace = true }
+tonic = { workspace = true }
+prost = { workspace = true }
+tokio = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[build-dependencies]
+tonic-build = { workspace = true }

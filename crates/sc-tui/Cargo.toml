@@ -1,0 +1,16 @@
+[package]
+name = "sc-tui"
+description = "$crypt interactive terminal UI with 3-pane packet analysis"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+sc-core = { workspace = true }
+sc-protocol = { workspace = true }
+sc-pcap = { workspace = true }
+ratatui = { workspace = true }
+crossterm = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }

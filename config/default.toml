@@ -1,0 +1,29 @@
+# $crypt Framework — Default Configuration
+
+[general]
+log_level = "info"
+log_format = "text"
+max_dissection_depth = 16
+
+[capture]
+snaplen = 65535
+buffer_size = 16777216  # 16 MB
+
+[plugins]
+native_dirs = ["plugins/builtins"]
+script_dirs = ["plugins/scripts"]
+hot_reload = true
+
+[sandbox]
+enable_seccomp = true
+enable_landlock = true
+output_dir = "output"
+
+[mesh]
+listen_addr = "[::1]:50051"
+peers = []
+heartbeat_interval_secs = 10
+
+[tui]
+theme = "dark"
+refresh_rate_ms = 100

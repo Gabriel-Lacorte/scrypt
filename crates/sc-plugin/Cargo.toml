@@ -1,0 +1,16 @@
+[package]
+name = "sc-plugin"
+description = "$crypt plugin system supporting Rust dylib and Lua scripting"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+sc-core = { workspace = true }
+sc-protocol = { workspace = true }
+libloading = { workspace = true }
+mlua = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+anyhow = { workspace = true }

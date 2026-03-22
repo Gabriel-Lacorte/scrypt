@@ -1,0 +1,17 @@
+[package]
+name = "sc-pcap"
+description = "$crypt PCAP reader, writer, and replay engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+sc-core = { workspace = true }
+sc-protocol = { workspace = true }
+pcap-parser = { workspace = true }
+memmap2 = { workspace = true }
+tokio = { workspace = true }
+rayon = { workspace = true }
+serde = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }

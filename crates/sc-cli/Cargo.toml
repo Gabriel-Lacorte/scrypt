@@ -1,0 +1,27 @@
+[package]
+name = "sc-cli"
+description = "$crypt command-line interface"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[[bin]]
+name = "scrypt"
+path = "src/main.rs"
+
+[dependencies]
+sc-core = { workspace = true }
+sc-protocol = { workspace = true }
+sc-pcap = { workspace = true }
+sc-plugin = { workspace = true }
+sc-tls = { workspace = true }
+sc-crypto = { workspace = true }
+sc-tui = { workspace = true }
+sc-sandbox = { workspace = true }
+sc-mesh = { workspace = true }
+clap = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow = { workspace = true }
+serde_json = { workspace = true }

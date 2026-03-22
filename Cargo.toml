@@ -1,0 +1,108 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/sc-core",
+    "crates/sc-crypto",
+    "crates/sc-protocol",
+    "crates/sc-tls",
+    "crates/sc-pcap",
+    "crates/sc-plugin",
+    "crates/sc-sandbox",
+    "crates/sc-mesh",
+    "crates/sc-tui",
+    "crates/sc-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "BSD-3-Clause"
+repository = "https://github.com/$crypt/framework"
+rust-version = "1.76"
+
+[workspace.dependencies]
+# Serialization & Config
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# Error Handling
+thiserror = "2"
+anyhow = "1"
+
+# Logging / Tracing
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+
+# Async Runtime
+tokio = { version = "1", features = ["full"] }
+
+# CLI
+clap = { version = "4", features = ["derive"] }
+
+# Protocol Parsing
+nom = "7"
+bytes = "1"
+aho-corasick = "1"
+
+# PCAP
+pcap-parser = "0.16"
+pcap = "2"
+memmap2 = "0.9"
+
+# Crypto
+aes-gcm = "0.10"
+chacha20poly1305 = "0.10"
+zeroize = { version = "1", features = ["derive"] }
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+hkdf = "0.12"
+sha2 = "0.10"
+
+# TLS
+x509-parser = "0.16"
+
+# Plugin System
+libloading = "0.8"
+mlua = { version = "0.10", features = ["lua54", "vendored", "serialize", "send"] }
+
+# Sandbox
+seccompiler = "0.4"
+
+# gRPC
+tonic = "0.12"
+prost = "0.13"
+tonic-build = "0.12"
+
+# TUI
+ratatui = "0.29"
+crossterm = "0.28"
+
+# Parallel Processing
+rayon = "1"
+
+# Testing & Benchmarks
+criterion = { version = "0.5", features = ["html_reports"] }
+assert_cmd = "2"
+insta = "1"
+
+# Internal crates
+sc-core = { path = "crates/sc-core" }
+sc-crypto = { path = "crates/sc-crypto" }
+sc-protocol = { path = "crates/sc-protocol" }
+sc-tls = { path = "crates/sc-tls" }
+sc-pcap = { path = "crates/sc-pcap" }
+sc-plugin = { path = "crates/sc-plugin" }
+sc-sandbox = { path = "crates/sc-sandbox" }
+sc-mesh = { path = "crates/sc-mesh" }
+sc-tui = { path = "crates/sc-tui" }
+sc-cli = { path = "crates/sc-cli" }
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+opt-level = 3
+
+[profile.bench]
+inherits = "release"
+debug = true

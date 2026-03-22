@@ -1,0 +1,11 @@
+[build]
+# Use mold linker if available, fallback to lld, then default
+# Uncomment the appropriate line for your system:
+# rustflags = ["-C", "link-arg=-fuse-ld=mold"]
+# rustflags = ["-C", "link-arg=-fuse-ld=lld"]
+
+[target.x86_64-unknown-linux-gnu]
+# rustflags = ["-C", "target-cpu=native"]
+
+[target.aarch64-unknown-linux-gnu]
+# rustflags = ["-C", "target-cpu=native"]
