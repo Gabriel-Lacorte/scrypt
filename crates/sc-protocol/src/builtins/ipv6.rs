@@ -42,16 +42,19 @@ fn parse_ipv6(input: &[u8]) -> IResult<&[u8], Ipv6Header> {
     let src_addr = Ipv6Addr::from(<[u8; 16]>::try_from(src_bytes).unwrap());
     let dst_addr = Ipv6Addr::from(<[u8; 16]>::try_from(dst_bytes).unwrap());
 
-    Ok((input, Ipv6Header {
-        version,
-        traffic_class,
-        flow_label,
-        payload_length,
-        next_header,
-        hop_limit,
-        src_addr,
-        dst_addr,
-    }))
+    Ok((
+        input,
+        Ipv6Header {
+            version,
+            traffic_class,
+            flow_label,
+            payload_length,
+            next_header,
+            hop_limit,
+            src_addr,
+            dst_addr,
+        },
+    ))
 }
 
 impl Dissector for Ipv6Dissector {
@@ -78,10 +81,9 @@ impl Dissector for Ipv6Dissector {
         data: &'a [u8],
         _context: &mut DissectionContext,
     ) -> sc_core::Result<DissectedLayer<'a>> {
-        let (remaining, hdr) =
-            parse_ipv6(data).map_err(|e| sc_core::ShadowError::Parse {
-                message: format!("IPv6 parse error: {e}"),
-            })?;
+        let (remaining, hdr) = parse_ipv6(data).map_err(|e| sc_core::ShadowError::Parse {
+            message: format!("IPv6 parse error: {e}"),
+        })?;
 
         let next_protocol = match hdr.next_header {
             6 => Some(Protocol::Tcp),

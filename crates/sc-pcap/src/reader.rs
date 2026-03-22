@@ -22,16 +22,14 @@ impl PcapReader {
         // Try PCAP format first, then PCAPNG
         match Self::parse_pcap(&data) {
             Ok(pkts) => packets = pkts,
-            Err(_) => {
-                match Self::parse_pcapng(&data) {
-                    Ok(pkts) => packets = pkts,
-                    Err(e) => {
-                        return Err(ShadowError::Pcap {
-                            message: format!("failed to parse PCAP/PCAPNG: {e}"),
-                        });
-                    }
+            Err(_) => match Self::parse_pcapng(&data) {
+                Ok(pkts) => packets = pkts,
+                Err(e) => {
+                    return Err(ShadowError::Pcap {
+                        message: format!("failed to parse PCAP/PCAPNG: {e}"),
+                    });
                 }
-            }
+            },
         }
 
         info!(count = packets.len(), "Loaded packets from PCAP");
@@ -41,8 +39,8 @@ impl PcapReader {
     fn parse_pcap(data: &[u8]) -> Result<Vec<OwnedPacket>, String> {
         use pcap_parser::*;
 
-        let mut reader = LegacyPcapReader::new(65536, data)
-            .map_err(|e| format!("not a valid PCAP: {e:?}"))?;
+        let mut reader =
+            LegacyPcapReader::new(65536, data).map_err(|e| format!("not a valid PCAP: {e:?}"))?;
 
         let mut packets = Vec::new();
 
@@ -51,10 +49,7 @@ impl PcapReader {
                 Ok((offset, block)) => {
                     match block {
                         PcapBlockOwned::Legacy(packet) => {
-                            let ts = Timestamp::new(
-                                packet.ts_sec as u64,
-                                packet.ts_usec,
-                            );
+                            let ts = Timestamp::new(packet.ts_sec as u64, packet.ts_usec);
                             packets.push(OwnedPacket {
                                 timestamp: ts,
                                 data: packet.data.to_vec(),
@@ -89,28 +84,25 @@ impl PcapReader {
     fn parse_pcapng(data: &[u8]) -> Result<Vec<OwnedPacket>, String> {
         use pcap_parser::*;
 
-        let mut reader = PcapNGReader::new(65536, data)
-            .map_err(|e| format!("not a valid PCAPNG: {e:?}"))?;
+        let mut reader =
+            PcapNGReader::new(65536, data).map_err(|e| format!("not a valid PCAPNG: {e:?}"))?;
 
         let mut packets = Vec::new();
 
         loop {
             match reader.next() {
                 Ok((offset, block)) => {
-                    match block {
-                        PcapBlockOwned::NG(Block::EnhancedPacket(epb)) => {
-                            let ts_raw = ((epb.ts_high as u64) << 32) | (epb.ts_low as u64);
-                            // Default resolution: microseconds
-                            let secs = ts_raw / 1_000_000;
-                            let micros = (ts_raw % 1_000_000) as u32;
-                            packets.push(OwnedPacket {
-                                timestamp: Timestamp::new(secs, micros),
-                                data: epb.data.to_vec(),
-                                original_len: epb.origlen,
-                                link_type: 1,
-                            });
-                        }
-                        _ => {}
+                    if let PcapBlockOwned::NG(Block::EnhancedPacket(epb)) = block {
+                        let ts_raw = ((epb.ts_high as u64) << 32) | (epb.ts_low as u64);
+                        // Default resolution: microseconds
+                        let secs = ts_raw / 1_000_000;
+                        let micros = (ts_raw % 1_000_000) as u32;
+                        packets.push(OwnedPacket {
+                            timestamp: Timestamp::new(secs, micros),
+                            data: epb.data.to_vec(),
+                            original_len: epb.origlen,
+                            link_type: 1,
+                        });
                     }
                     reader.consume(offset);
                 }

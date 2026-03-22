@@ -112,12 +112,15 @@ fn parse_tls_record(input: &[u8]) -> IResult<&[u8], TlsRecord<'_>> {
     let (input, length) = be_u16(input)?;
     let (input, fragment) = take(length)(input)?;
 
-    Ok((input, TlsRecord {
-        content_type: ContentType::from(content_type_byte),
-        version_major,
-        version_minor,
-        fragment,
-    }))
+    Ok((
+        input,
+        TlsRecord {
+            content_type: ContentType::from(content_type_byte),
+            version_major,
+            version_minor,
+            fragment,
+        },
+    ))
 }
 
 // ---------------------------------------------------------------------------
@@ -300,24 +303,32 @@ pub fn parse_client_hello(data: &[u8]) -> std::result::Result<ClientHelloInfo, S
     let mut pos = 34;
     // Session ID
     if pos >= data.len() {
-        return Err(ShadowError::Tls { message: "Truncated session_id".into() });
+        return Err(ShadowError::Tls {
+            message: "Truncated session_id".into(),
+        });
     }
     let sid_len = data[pos] as usize;
     pos += 1;
     if pos + sid_len > data.len() {
-        return Err(ShadowError::Tls { message: "Truncated session_id data".into() });
+        return Err(ShadowError::Tls {
+            message: "Truncated session_id data".into(),
+        });
     }
     let session_id = data[pos..pos + sid_len].to_vec();
     pos += sid_len;
 
     // Cipher suites
     if pos + 2 > data.len() {
-        return Err(ShadowError::Tls { message: "Truncated cipher_suites".into() });
+        return Err(ShadowError::Tls {
+            message: "Truncated cipher_suites".into(),
+        });
     }
     let cs_len = u16::from_be_bytes([data[pos], data[pos + 1]]) as usize;
     pos += 2;
     if pos + cs_len > data.len() {
-        return Err(ShadowError::Tls { message: "Truncated cipher_suites data".into() });
+        return Err(ShadowError::Tls {
+            message: "Truncated cipher_suites data".into(),
+        });
     }
     let mut cipher_suites = Vec::new();
     let cs_end = pos + cs_len;
@@ -329,7 +340,9 @@ pub fn parse_client_hello(data: &[u8]) -> std::result::Result<ClientHelloInfo, S
 
     // Compression methods
     if pos >= data.len() {
-        return Err(ShadowError::Tls { message: "Truncated compression".into() });
+        return Err(ShadowError::Tls {
+            message: "Truncated compression".into(),
+        });
     }
     let comp_len = data[pos] as usize;
     pos += 1 + comp_len;
@@ -391,19 +404,25 @@ pub fn parse_server_hello(data: &[u8]) -> std::result::Result<ServerHelloInfo, S
     let mut pos = 34;
     // Session ID
     if pos >= data.len() {
-        return Err(ShadowError::Tls { message: "Truncated session_id".into() });
+        return Err(ShadowError::Tls {
+            message: "Truncated session_id".into(),
+        });
     }
     let sid_len = data[pos] as usize;
     pos += 1;
     if pos + sid_len > data.len() {
-        return Err(ShadowError::Tls { message: "Truncated session_id data".into() });
+        return Err(ShadowError::Tls {
+            message: "Truncated session_id data".into(),
+        });
     }
     let session_id = data[pos..pos + sid_len].to_vec();
     pos += sid_len;
 
     // Cipher suite (2 bytes)
     if pos + 2 > data.len() {
-        return Err(ShadowError::Tls { message: "Truncated cipher_suite".into() });
+        return Err(ShadowError::Tls {
+            message: "Truncated cipher_suite".into(),
+        });
     }
     let cipher_suite = u16::from_be_bytes([data[pos], data[pos + 1]]);
     pos += 2;
@@ -470,12 +489,15 @@ pub fn parse_certificate_message(data: &[u8]) -> Vec<CertificateInfo> {
     if pos + 3 > data.len() {
         return certs;
     }
-    let list_len = ((data[pos] as usize) << 16) | ((data[pos + 1] as usize) << 8) | (data[pos + 2] as usize);
+    let list_len =
+        ((data[pos] as usize) << 16) | ((data[pos + 1] as usize) << 8) | (data[pos + 2] as usize);
     pos += 3;
     let list_end = (pos + list_len).min(data.len());
 
     while pos + 3 <= list_end {
-        let cert_len = ((data[pos] as usize) << 16) | ((data[pos + 1] as usize) << 8) | (data[pos + 2] as usize);
+        let cert_len = ((data[pos] as usize) << 16)
+            | ((data[pos + 1] as usize) << 8)
+            | (data[pos + 2] as usize);
         pos += 3;
         if pos + cert_len > list_end {
             break;
@@ -499,7 +521,7 @@ pub fn parse_certificate_message(data: &[u8]) -> Vec<CertificateInfo> {
 
 /// Parse a single DER-encoded X.509 certificate using x509-parser.
 fn parse_x509_cert(der: &[u8]) -> Option<CertificateInfo> {
-    use sha2::{Sha256, Digest};
+    use sha2::{Digest, Sha256};
     use x509_parser::prelude::*;
 
     let (_, cert) = X509Certificate::from_der(der).ok()?;
@@ -623,7 +645,7 @@ impl KeyLog {
 
 fn hex_decode(s: &str) -> Option<Vec<u8>> {
     let s = s.trim();
-    if s.len() % 2 != 0 {
+    if !s.len().is_multiple_of(2) {
         return None;
     }
     let mut bytes = Vec::with_capacity(s.len() / 2);
@@ -650,11 +672,9 @@ pub fn decrypt_tls13_record(
     suite: CipherSuite,
 ) -> std::result::Result<(ContentType, Vec<u8>), ShadowError> {
     // Derive key and IV from the traffic secret
-    let (key_bytes, iv_bytes) =
-        sc_crypto::tls_kdf::derive_traffic_keys(traffic_secret, suite).map_err(|e| {
-            ShadowError::Tls {
-                message: format!("Key derivation failed: {e}"),
-            }
+    let (key_bytes, iv_bytes) = sc_crypto::tls_kdf::derive_traffic_keys(traffic_secret, suite)
+        .map_err(|e| ShadowError::Tls {
+            message: format!("Key derivation failed: {e}"),
         })?;
 
     // Construct per-record nonce: XOR the IV with the sequence number (padded to IV length)
@@ -670,7 +690,8 @@ pub fn decrypt_tls13_record(
     let record_len = encrypted_fragment.len() as u16;
     let aad = [
         0x17, // ApplicationData
-        0x03, 0x03, // TLS 1.2 (wire version for TLS 1.3)
+        0x03,
+        0x03, // TLS 1.2 (wire version for TLS 1.3)
         (record_len >> 8) as u8,
         (record_len & 0xff) as u8,
     ];
@@ -717,10 +738,15 @@ fn decrypt_aead_with_aad(
                 message: format!("AES key error: {e}"),
             })?;
             let nonce = Nonce::from_slice(nonce);
-            let payload = Payload { msg: ciphertext, aad };
-            cipher.decrypt(nonce, payload).map_err(|e| ShadowError::Tls {
-                message: format!("AES-GCM decryption failed: {e}"),
-            })
+            let payload = Payload {
+                msg: ciphertext,
+                aad,
+            };
+            cipher
+                .decrypt(nonce, payload)
+                .map_err(|e| ShadowError::Tls {
+                    message: format!("AES-GCM decryption failed: {e}"),
+                })
         }
         CipherSuite::ChaCha20Poly1305 => {
             use chacha20poly1305::{aead::Aead, aead::KeyInit, ChaCha20Poly1305};
@@ -729,10 +755,15 @@ fn decrypt_aead_with_aad(
                     message: format!("ChaCha20 key error: {e}"),
                 })?;
             let nonce = chacha20poly1305::Nonce::from_slice(nonce);
-            let payload = Payload { msg: ciphertext, aad };
-            cipher.decrypt(nonce, payload).map_err(|e| ShadowError::Tls {
-                message: format!("ChaCha20-Poly1305 decryption failed: {e}"),
-            })
+            let payload = Payload {
+                msg: ciphertext,
+                aad,
+            };
+            cipher
+                .decrypt(nonce, payload)
+                .map_err(|e| ShadowError::Tls {
+                    message: format!("ChaCha20-Poly1305 decryption failed: {e}"),
+                })
         }
     }
 }
@@ -866,10 +897,7 @@ impl Dissector for TlsDissector {
                 }
                 HandshakeType::ServerHello => {
                     if let Ok(sh) = parse_server_hello(hs_body) {
-                        let ver = sh
-                            .selected_version
-                            .as_deref()
-                            .unwrap_or(&sh.version);
+                        let ver = sh.selected_version.as_deref().unwrap_or(&sh.version);
                         fields.push(Field {
                             name: "Selected Version".into(),
                             display_value: ver.to_string(),
@@ -1108,7 +1136,8 @@ CLIENT_TRAFFIC_SECRET_0 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c
         let keylog = KeyLog::parse(content).unwrap();
         assert_eq!(keylog.len(), 1);
 
-        let cr = hex_decode("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20").unwrap();
+        let cr =
+            hex_decode("0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c1d1e1f20").unwrap();
         let secret = keylog.get_secret(&cr, "CLIENT_RANDOM");
         assert!(secret.is_some());
         assert_eq!(secret.unwrap(), &hex_decode("aabbccdd").unwrap());
@@ -1131,10 +1160,10 @@ CLIENT_TRAFFIC_SECRET_0 0102030405060708090a0b0c0d0e0f101112131415161718191a1b1c
         let data = vec![
             0x00, 0x01, // ext type = 1 (max_fragment_length)
             0x00, 0x01, // length = 1
-            0x04,       // data
+            0x04, // data
             0xFF, 0x01, // ext type = renegotiation_info
             0x00, 0x01, // length = 1
-            0x00,       // data
+            0x00, // data
         ];
         let exts = parse_extensions(&data);
         assert_eq!(exts.len(), 2);

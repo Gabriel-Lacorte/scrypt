@@ -70,11 +70,16 @@ impl DissectionTree {
         let mut out = String::new();
         for (i, layer) in self.layers.iter().enumerate() {
             let indent = "  ".repeat(i);
-            out.push_str(&format!("{indent}▶ {} [bytes {}..{}]\n",
-                layer.protocol, layer.byte_range.start, layer.byte_range.end));
+            out.push_str(&format!(
+                "{indent}▶ {} [bytes {}..{}]\n",
+                layer.protocol, layer.byte_range.start, layer.byte_range.end
+            ));
             out.push_str(&format!("{indent}  {}\n", layer.summary));
             for field in &layer.fields {
-                out.push_str(&format!("{indent}    {}: {}\n", field.name, field.display_value));
+                out.push_str(&format!(
+                    "{indent}    {}: {}\n",
+                    field.name, field.display_value
+                ));
             }
         }
         out

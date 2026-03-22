@@ -9,4 +9,4 @@ pub use dissector::{Confidence, DissectedLayer, DissectionContext, Dissector, Di
 pub use model::{DissectionTree, Field, FieldType, ProtocolNode};
 pub use patterns::{Pattern, PatternMatcher};
 pub use pipeline::Pipeline;
-pub use registry::{DissectorRegistry, SharedRegistry, new_shared_registry};
+pub use registry::{new_shared_registry, DissectorRegistry, SharedRegistry};

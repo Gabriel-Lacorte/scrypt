@@ -253,10 +253,8 @@ impl Default for TuiConfig {
 impl Config {
     /// Load configuration from a TOML file, falling back to defaults.
     pub fn load(path: &std::path::Path) -> crate::Result<Self> {
-        let content = std::fs::read_to_string(path).map_err(|e| {
-            crate::ShadowError::Config {
-                message: format!("failed to read config file {}: {e}", path.display()),
-            }
+        let content = std::fs::read_to_string(path).map_err(|e| crate::ShadowError::Config {
+            message: format!("failed to read config file {}: {e}", path.display()),
         })?;
         toml::from_str(&content).map_err(|e| crate::ShadowError::Config {
             message: format!("failed to parse config: {e}"),

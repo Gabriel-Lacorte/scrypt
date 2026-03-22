@@ -25,9 +25,16 @@ impl DissectorRegistry {
 
     /// Register a dissector for a specific protocol hint.
     pub fn register_for_protocol(&mut self, protocol: Protocol, dissector: Arc<dyn Dissector>) {
-        debug!("Registering dissector {} for protocol {:?}", dissector.id(), protocol);
+        debug!(
+            "Registering dissector {} for protocol {:?}",
+            dissector.id(),
+            protocol
+        );
         self.all.insert(dissector.id(), Arc::clone(&dissector));
-        self.by_protocol.entry(protocol).or_default().push(dissector);
+        self.by_protocol
+            .entry(protocol)
+            .or_default()
+            .push(dissector);
     }
 
     /// Register a dissector for a specific port number.
@@ -62,7 +69,10 @@ impl DissectorRegistry {
             if let Some(dissectors) = self.by_port.get(port) {
                 for d in dissectors {
                     // Avoid duplicates
-                    if candidates.iter().any(|(_, existing)| existing.id() == d.id()) {
+                    if candidates
+                        .iter()
+                        .any(|(_, existing)| existing.id() == d.id())
+                    {
                         continue;
                     }
                     let conf = d.can_dissect(data, context);
@@ -75,7 +85,7 @@ impl DissectorRegistry {
 
         // If no candidates found via hints, try all dissectors
         if candidates.is_empty() {
-            for (_, d) in &self.all {
+            for d in self.all.values() {
                 let conf = d.can_dissect(data, context);
                 if conf > Confidence::None {
                     candidates.push((conf, Arc::clone(d)));
@@ -120,12 +130,20 @@ mod tests {
 
     struct DummyDissector;
     impl Dissector for DummyDissector {
-        fn id(&self) -> DissectorId { DissectorId("dummy".into()) }
-        fn name(&self) -> &str { "Dummy" }
+        fn id(&self) -> DissectorId {
+            DissectorId("dummy".into())
+        }
+        fn name(&self) -> &str {
+            "Dummy"
+        }
         fn can_dissect(&self, _data: &[u8], _ctx: &DissectionContext) -> Confidence {
             Confidence::High
         }
-        fn dissect<'a>(&self, data: &'a [u8], _ctx: &mut DissectionContext) -> sc_core::Result<DissectedLayer<'a>> {
+        fn dissect<'a>(
+            &self,
+            data: &'a [u8],
+            _ctx: &mut DissectionContext,
+        ) -> sc_core::Result<DissectedLayer<'a>> {
             Ok(DissectedLayer {
                 node: ProtocolNode {
                     protocol: "Dummy".into(),

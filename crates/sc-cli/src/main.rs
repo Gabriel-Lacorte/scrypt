@@ -23,7 +23,12 @@ async fn main() -> anyhow::Result<()> {
     info!(version = env!("CARGO_PKG_VERSION"), "$crypt starting");
 
     match cli.command {
-        Commands::Analyze { input, filter, format, max_packets } => {
+        Commands::Analyze {
+            input,
+            filter,
+            format,
+            max_packets,
+        } => {
             cmd_analyze(&config, &input, filter.as_deref(), &format, max_packets)?;
         }
         Commands::Tui { input } => {
@@ -208,7 +213,6 @@ fn cmd_info(config: &Config) {
     } else {
         for feat in &hw {
             println!("  ✓ {feat}");
-
         }
     }
 

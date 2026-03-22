@@ -33,9 +33,7 @@ impl ReplayEngine {
                 if speed > 0.0 {
                     if let Some(prev) = last_ts {
                         let delta = packet.timestamp.delta(&prev);
-                        let adjusted = Duration::from_secs_f64(
-                            delta.as_secs_f64() / speed,
-                        );
+                        let adjusted = Duration::from_secs_f64(delta.as_secs_f64() / speed);
                         if adjusted.as_micros() > 100 {
                             sleep(adjusted).await;
                         }

@@ -114,7 +114,7 @@ impl Timestamp {
     pub fn delta(&self, other: &Timestamp) -> Duration {
         let a = self.as_duration();
         let b = other.as_duration();
-        if a >= b { a - b } else { b - a }
+        a.abs_diff(b)
     }
 }
 

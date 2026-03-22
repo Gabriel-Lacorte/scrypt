@@ -56,22 +56,25 @@ fn parse_ipv4(input: &[u8]) -> IResult<&[u8], Ipv4Header> {
     let options_len = header_len.saturating_sub(20);
     let (input, _options) = take(options_len)(input)?;
 
-    Ok((input, Ipv4Header {
-        version,
-        ihl,
-        dscp,
-        ecn,
-        total_length,
-        identification,
-        flags,
-        fragment_offset,
-        ttl,
-        protocol,
-        checksum,
-        src_addr,
-        dst_addr,
-        header_len,
-    }))
+    Ok((
+        input,
+        Ipv4Header {
+            version,
+            ihl,
+            dscp,
+            ecn,
+            total_length,
+            identification,
+            flags,
+            fragment_offset,
+            ttl,
+            protocol,
+            checksum,
+            src_addr,
+            dst_addr,
+            header_len,
+        },
+    ))
 }
 
 fn ip_protocol_name(proto: u8) -> &'static str {
@@ -108,10 +111,9 @@ impl Dissector for Ipv4Dissector {
         data: &'a [u8],
         _context: &mut DissectionContext,
     ) -> sc_core::Result<DissectedLayer<'a>> {
-        let (remaining, hdr) =
-            parse_ipv4(data).map_err(|e| sc_core::ShadowError::Parse {
-                message: format!("IPv4 parse error: {e}"),
-            })?;
+        let (remaining, hdr) = parse_ipv4(data).map_err(|e| sc_core::ShadowError::Parse {
+            message: format!("IPv4 parse error: {e}"),
+        })?;
 
         let next_protocol = match hdr.protocol {
             6 => Some(Protocol::Tcp),
@@ -182,7 +184,10 @@ impl Dissector for Ipv4Dissector {
             ],
             summary: format!(
                 "{} -> {}, TTL={}, Proto={}",
-                hdr.src_addr, hdr.dst_addr, hdr.ttl, ip_protocol_name(hdr.protocol)
+                hdr.src_addr,
+                hdr.dst_addr,
+                hdr.ttl,
+                ip_protocol_name(hdr.protocol)
             ),
         };
 

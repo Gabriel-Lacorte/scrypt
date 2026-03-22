@@ -15,7 +15,6 @@ use sc_pcap::AnalyzedPacket;
 use sc_protocol::DissectionTree;
 use std::io;
 
-
 /// Color theme for the TUI.
 #[derive(Debug, Clone)]
 pub struct Theme {
@@ -185,7 +184,9 @@ impl App {
 
     fn draw_packet_list(&mut self, f: &mut Frame, area: Rect) {
         let highlight_style = if self.active_pane == Pane::PacketList {
-            Style::default().bg(self.theme.highlight_bg).add_modifier(Modifier::BOLD)
+            Style::default()
+                .bg(self.theme.highlight_bg)
+                .add_modifier(Modifier::BOLD)
         } else {
             Style::default().bg(self.theme.highlight_bg)
         };
@@ -199,58 +200,77 @@ impl App {
             Cell::from("Length"),
             Cell::from("Info"),
         ])
-        .style(Style::default().fg(self.theme.header_fg).add_modifier(Modifier::BOLD));
+        .style(
+            Style::default()
+                .fg(self.theme.header_fg)
+                .add_modifier(Modifier::BOLD),
+        );
 
         let theme = &self.theme;
-        let rows: Vec<Row> = self.filtered_indices.iter().map(|&i| {
-            let pkt = &self.packets[i];
-            let tree = &pkt.tree;
-            let top_proto = &tree.top_protocol;
+        let rows: Vec<Row> = self
+            .filtered_indices
+            .iter()
+            .map(|&i| {
+                let pkt = &self.packets[i];
+                let tree = &pkt.tree;
+                let top_proto = &tree.top_protocol;
 
-            let (src, dst) = extract_addresses(tree);
+                let (src, dst) = extract_addresses(tree);
 
-            let info = tree.layers.last()
-                .map(|l| l.summary.clone())
-                .unwrap_or_default();
+                let info = tree
+                    .layers
+                    .last()
+                    .map(|l| l.summary.clone())
+                    .unwrap_or_default();
 
-            let proto_style = match top_proto.as_str() {
-                "TCP" => Style::default().fg(theme.proto_tcp),
-                "UDP" => Style::default().fg(theme.proto_udp),
-                "TLS" => Style::default().fg(theme.proto_tls),
-                "DNS" => Style::default().fg(theme.proto_dns),
-                "HTTP" => Style::default().fg(theme.proto_http),
-                _ => Style::default(),
-            };
+                let proto_style = match top_proto.as_str() {
+                    "TCP" => Style::default().fg(theme.proto_tcp),
+                    "UDP" => Style::default().fg(theme.proto_udp),
+                    "TLS" => Style::default().fg(theme.proto_tls),
+                    "DNS" => Style::default().fg(theme.proto_dns),
+                    "HTTP" => Style::default().fg(theme.proto_http),
+                    _ => Style::default(),
+                };
 
-            Row::new(vec![
-                Cell::from(format!("{}", pkt.index + 1)),
-                Cell::from(format!("{}", pkt.packet.timestamp)),
-                Cell::from(src),
-                Cell::from(dst),
-                Cell::from(top_proto.clone()).style(proto_style),
-                Cell::from(format!("{}", pkt.packet.data.len())),
-                Cell::from(info),
-            ])
-        }).collect();
+                Row::new(vec![
+                    Cell::from(format!("{}", pkt.index + 1)),
+                    Cell::from(format!("{}", pkt.packet.timestamp)),
+                    Cell::from(src),
+                    Cell::from(dst),
+                    Cell::from(top_proto.clone()).style(proto_style),
+                    Cell::from(format!("{}", pkt.packet.data.len())),
+                    Cell::from(info),
+                ])
+            })
+            .collect();
 
-        let table = Table::new(rows, [
-            Constraint::Length(6),
-            Constraint::Length(18),
-            Constraint::Length(18),
-            Constraint::Length(18),
-            Constraint::Length(8),
-            Constraint::Length(6),
-            Constraint::Min(20),
-        ])
+        let table = Table::new(
+            rows,
+            [
+                Constraint::Length(6),
+                Constraint::Length(18),
+                Constraint::Length(18),
+                Constraint::Length(18),
+                Constraint::Length(8),
+                Constraint::Length(6),
+                Constraint::Min(20),
+            ],
+        )
         .header(header)
-        .block(Block::default()
-            .title(format!(" Packets ({}/{}) ", self.filtered_indices.len(), self.packets.len()))
-            .borders(Borders::ALL)
-            .border_style(if self.active_pane == Pane::PacketList {
-                Style::default().fg(self.theme.border_active)
-            } else {
-                Style::default().fg(self.theme.border_inactive)
-            }))
+        .block(
+            Block::default()
+                .title(format!(
+                    " Packets ({}/{}) ",
+                    self.filtered_indices.len(),
+                    self.packets.len()
+                ))
+                .borders(Borders::ALL)
+                .border_style(if self.active_pane == Pane::PacketList {
+                    Style::default().fg(self.theme.border_active)
+                } else {
+                    Style::default().fg(self.theme.border_inactive)
+                }),
+        )
         .row_highlight_style(highlight_style);
 
         f.render_stateful_widget(table, area, &mut self.packet_table_state);
@@ -260,25 +280,35 @@ impl App {
         let items: Vec<ListItem> = if let Some(idx) = self.selected_packet {
             if let Some(&packet_idx) = self.filtered_indices.get(idx) {
                 let tree = &self.packets[packet_idx].tree;
-                tree.layers.iter().enumerate().flat_map(|(depth, layer)| {
-                    let mut items = Vec::new();
-                    let indent = "  ".repeat(depth);
-                    items.push(ListItem::new(Line::from(vec![
-                        Span::styled(
+                tree.layers
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(depth, layer)| {
+                        let mut items = Vec::new();
+                        let indent = "  ".repeat(depth);
+                        items.push(ListItem::new(Line::from(vec![Span::styled(
                             format!("{indent}> {}", layer.protocol),
-                            Style::default().fg(self.theme.border_active).add_modifier(Modifier::BOLD),
-                        ),
-                    ])));
-                    for field in &layer.fields {
-                        items.push(ListItem::new(Line::from(vec![
-                            Span::raw(format!("{indent}    ")),
-                            Span::styled(&field.name, Style::default().fg(self.theme.header_fg)),
-                            Span::raw(": "),
-                            Span::styled(&field.display_value, Style::default().fg(Color::White)),
-                        ])));
-                    }
-                    items
-                }).collect()
+                            Style::default()
+                                .fg(self.theme.border_active)
+                                .add_modifier(Modifier::BOLD),
+                        )])));
+                        for field in &layer.fields {
+                            items.push(ListItem::new(Line::from(vec![
+                                Span::raw(format!("{indent}    ")),
+                                Span::styled(
+                                    &field.name,
+                                    Style::default().fg(self.theme.header_fg),
+                                ),
+                                Span::raw(": "),
+                                Span::styled(
+                                    &field.display_value,
+                                    Style::default().fg(Color::White),
+                                ),
+                            ])));
+                        }
+                        items
+                    })
+                    .collect()
             } else {
                 vec![]
             }
@@ -287,14 +317,16 @@ impl App {
         };
 
         let list = List::new(items)
-            .block(Block::default()
-                .title(" Protocol Tree ")
-                .borders(Borders::ALL)
-                .border_style(if self.active_pane == Pane::ProtocolTree {
-                    Style::default().fg(self.theme.border_active)
-                } else {
-                    Style::default().fg(self.theme.border_inactive)
-                }))
+            .block(
+                Block::default()
+                    .title(" Protocol Tree ")
+                    .borders(Borders::ALL)
+                    .border_style(if self.active_pane == Pane::ProtocolTree {
+                        Style::default().fg(self.theme.border_active)
+                    } else {
+                        Style::default().fg(self.theme.border_inactive)
+                    }),
+            )
             .highlight_style(Style::default().bg(self.theme.highlight_bg));
 
         f.render_stateful_widget(list, area, &mut self.tree_list_state);
@@ -314,14 +346,16 @@ impl App {
         };
 
         let paragraph = Paragraph::new(text)
-            .block(Block::default()
-                .title(" Hex Dump ")
-                .borders(Borders::ALL)
-                .border_style(if self.active_pane == Pane::HexDump {
-                    Style::default().fg(self.theme.border_active)
-                } else {
-                    Style::default().fg(self.theme.border_inactive)
-                }))
+            .block(
+                Block::default()
+                    .title(" Hex Dump ")
+                    .borders(Borders::ALL)
+                    .border_style(if self.active_pane == Pane::HexDump {
+                        Style::default().fg(self.theme.border_active)
+                    } else {
+                        Style::default().fg(self.theme.border_inactive)
+                    }),
+            )
             .scroll((self.hex_scroll, 0))
             .style(Style::default().fg(self.theme.hex_fg));
 
@@ -343,8 +377,11 @@ impl App {
             " [{pane_name}] | {pkt_info} | Total: {} | q:Quit /:Filter Tab:Switch j/k:Navigate g/G:Top/Bottom",
             self.packets.len()
         );
-        let bar = Paragraph::new(status)
-            .style(Style::default().fg(self.theme.status_fg).bg(self.theme.status_bg));
+        let bar = Paragraph::new(status).style(
+            Style::default()
+                .fg(self.theme.status_fg)
+                .bg(self.theme.status_bg),
+        );
         f.render_widget(bar, area);
     }
 
@@ -385,19 +422,17 @@ impl App {
             }
             KeyCode::Char('j') | KeyCode::Down => self.move_selection(1),
             KeyCode::Char('k') | KeyCode::Up => self.move_selection(-1),
-            KeyCode::Char('g') => {
-                match self.active_pane {
-                    Pane::PacketList if !self.filtered_indices.is_empty() => {
-                        self.packet_table_state.select(Some(0));
-                        self.selected_packet = Some(0);
-                        self.hex_scroll = 0;
-                    }
-                    Pane::HexDump => {
-                        self.hex_scroll = 0;
-                    }
-                    _ => {}
+            KeyCode::Char('g') => match self.active_pane {
+                Pane::PacketList if !self.filtered_indices.is_empty() => {
+                    self.packet_table_state.select(Some(0));
+                    self.selected_packet = Some(0);
+                    self.hex_scroll = 0;
                 }
-            }
+                Pane::HexDump => {
+                    self.hex_scroll = 0;
+                }
+                _ => {}
+            },
             KeyCode::Char('G') => {
                 match self.active_pane {
                     Pane::PacketList if !self.filtered_indices.is_empty() => {
@@ -460,7 +495,7 @@ impl App {
         if let Some(idx) = self.selected_packet {
             if let Some(&packet_idx) = self.filtered_indices.get(idx) {
                 let len = self.packets[packet_idx].packet.data.len();
-                let lines = (len + 15) / 16;
+                let lines = len.div_ceil(16);
                 return lines.saturating_sub(1) as u16;
             }
         }
@@ -497,11 +532,15 @@ impl App {
 fn extract_addresses(tree: &DissectionTree) -> (String, String) {
     for layer in &tree.layers {
         if layer.protocol == "IPv4" || layer.protocol == "IPv6" {
-            let src = layer.fields.iter()
+            let src = layer
+                .fields
+                .iter()
                 .find(|f| f.name == "Source")
                 .map(|f| f.display_value.clone())
                 .unwrap_or_else(|| "?".into());
-            let dst = layer.fields.iter()
+            let dst = layer
+                .fields
+                .iter()
                 .find(|f| f.name == "Destination")
                 .map(|f| f.display_value.clone())
                 .unwrap_or_else(|| "?".into());
@@ -510,11 +549,15 @@ fn extract_addresses(tree: &DissectionTree) -> (String, String) {
     }
     for layer in &tree.layers {
         if layer.protocol == "Ethernet" {
-            let src = layer.fields.iter()
+            let src = layer
+                .fields
+                .iter()
                 .find(|f| f.name == "Source")
                 .map(|f| f.display_value.clone())
                 .unwrap_or_else(|| "?".into());
-            let dst = layer.fields.iter()
+            let dst = layer
+                .fields
+                .iter()
                 .find(|f| f.name == "Destination")
                 .map(|f| f.display_value.clone())
                 .unwrap_or_else(|| "?".into());
@@ -538,7 +581,7 @@ fn format_hex_dump(data: &[u8], width: usize) -> String {
     // Solve for N: N = (width - 13) / 4  (or (width - 14) / 4 if mid-gap)
     // Round down to nearest multiple of 4, clamp to [4, 16].
     let max_n = if width >= 14 {
-        (width - 14) / 4   // assume mid-gap to be safe
+        (width - 14) / 4 // assume mid-gap to be safe
     } else {
         1
     };
@@ -607,12 +650,18 @@ fn filter_matches(pkt: &AnalyzedPacket, expr: &str) -> bool {
     let tree = &pkt.tree;
 
     // Exact protocol match
-    if matches!(expr, "tcp" | "udp" | "tls" | "dns" | "http" | "ipv4" | "ipv6" | "ethernet" | "arp") {
+    if matches!(
+        expr,
+        "tcp" | "udp" | "tls" | "dns" | "http" | "ipv4" | "ipv6" | "ethernet" | "arp"
+    ) {
         let upper = expr.to_uppercase();
         if tree.top_protocol == upper {
             return true;
         }
-        return tree.layers.iter().any(|l| l.protocol.eq_ignore_ascii_case(expr));
+        return tree
+            .layers
+            .iter()
+            .any(|l| l.protocol.eq_ignore_ascii_case(expr));
     }
 
     // Port filter: port:NUMBER
@@ -632,7 +681,9 @@ fn filter_matches(pkt: &AnalyzedPacket, expr: &str) -> bool {
     if let Some(addr) = strip_filter_op(expr, "ip.src") {
         return tree.layers.iter().any(|l| {
             (l.protocol == "IPv4" || l.protocol == "IPv6")
-                && l.fields.iter().any(|f| f.name == "Source" && f.display_value == addr)
+                && l.fields
+                    .iter()
+                    .any(|f| f.name == "Source" && f.display_value == addr)
         });
     }
 
@@ -640,7 +691,9 @@ fn filter_matches(pkt: &AnalyzedPacket, expr: &str) -> bool {
     if let Some(addr) = strip_filter_op(expr, "ip.dst") {
         return tree.layers.iter().any(|l| {
             (l.protocol == "IPv4" || l.protocol == "IPv6")
-                && l.fields.iter().any(|f| f.name == "Destination" && f.display_value == addr)
+                && l.fields
+                    .iter()
+                    .any(|f| f.name == "Destination" && f.display_value == addr)
         });
     }
 
@@ -648,7 +701,9 @@ fn filter_matches(pkt: &AnalyzedPacket, expr: &str) -> bool {
     if let Some(val) = expr.strip_prefix("field:") {
         let val = val.trim().to_lowercase();
         return tree.layers.iter().any(|l| {
-            l.fields.iter().any(|f| f.display_value.to_lowercase().contains(&val))
+            l.fields
+                .iter()
+                .any(|f| f.display_value.to_lowercase().contains(&val))
         });
     }
 
@@ -667,8 +722,8 @@ fn filter_matches(pkt: &AnalyzedPacket, expr: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use sc_protocol::{DissectionTree, Field, FieldType, ProtocolNode};
     use sc_core::types::{OwnedPacket, Timestamp};
+    use sc_protocol::{DissectionTree, Field, FieldType, ProtocolNode};
 
     fn make_packet(protocol: &str, fields: Vec<(&str, &str)>) -> AnalyzedPacket {
         let layers = vec![ProtocolNode {
@@ -702,14 +757,20 @@ mod tests {
 
     #[test]
     fn test_filter_protocol() {
-        let pkt = make_packet("TCP", vec![("Source Port", "443"), ("Destination Port", "12345")]);
+        let pkt = make_packet(
+            "TCP",
+            vec![("Source Port", "443"), ("Destination Port", "12345")],
+        );
         assert!(filter_matches(&pkt, "tcp"));
         assert!(!filter_matches(&pkt, "udp"));
     }
 
     #[test]
     fn test_filter_port() {
-        let pkt = make_packet("TCP", vec![("Source Port", "443"), ("Destination Port", "12345")]);
+        let pkt = make_packet(
+            "TCP",
+            vec![("Source Port", "443"), ("Destination Port", "12345")],
+        );
         assert!(filter_matches(&pkt, "port:443"));
         assert!(filter_matches(&pkt, "port:12345"));
         assert!(!filter_matches(&pkt, "port:80"));
@@ -717,7 +778,10 @@ mod tests {
 
     #[test]
     fn test_filter_ip() {
-        let pkt = make_packet("IPv4", vec![("Source", "10.0.0.1"), ("Destination", "192.168.1.1")]);
+        let pkt = make_packet(
+            "IPv4",
+            vec![("Source", "10.0.0.1"), ("Destination", "192.168.1.1")],
+        );
         assert!(filter_matches(&pkt, "ip.src==10.0.0.1"));
         assert!(filter_matches(&pkt, "ip.dst==192.168.1.1"));
         assert!(!filter_matches(&pkt, "ip.src==10.0.0.2"));
@@ -754,7 +818,7 @@ mod tests {
         let dump = format_hex_dump(&data, 80);
         let lines: Vec<&str> = dump.trim_end().split('\n').collect();
         assert_eq!(lines.len(), 2); // 32 bytes / 16 bpl = 2 lines
-        // Each line should fit within 80 cols and contain offset + hex + ASCII
+                                    // Each line should fit within 80 cols and contain offset + hex + ASCII
         assert!(lines[0].starts_with("00000000"));
         assert!(lines[0].contains('|'));
     }
@@ -779,10 +843,22 @@ mod tests {
 
     #[test]
     fn test_strip_filter_op() {
-        assert_eq!(strip_filter_op("ip.src==10.0.0.1", "ip.src"), Some("10.0.0.1"));
-        assert_eq!(strip_filter_op("ip.src == 10.0.0.1", "ip.src"), Some("10.0.0.1"));
-        assert_eq!(strip_filter_op("ip.src ==10.0.0.1", "ip.src"), Some("10.0.0.1"));
-        assert_eq!(strip_filter_op("ip.src== 10.0.0.1", "ip.src"), Some("10.0.0.1"));
+        assert_eq!(
+            strip_filter_op("ip.src==10.0.0.1", "ip.src"),
+            Some("10.0.0.1")
+        );
+        assert_eq!(
+            strip_filter_op("ip.src == 10.0.0.1", "ip.src"),
+            Some("10.0.0.1")
+        );
+        assert_eq!(
+            strip_filter_op("ip.src ==10.0.0.1", "ip.src"),
+            Some("10.0.0.1")
+        );
+        assert_eq!(
+            strip_filter_op("ip.src== 10.0.0.1", "ip.src"),
+            Some("10.0.0.1")
+        );
         assert_eq!(strip_filter_op("ip.dst==1.2.3.4", "ip.src"), None);
         assert_eq!(strip_filter_op("ip.src==", "ip.src"), None);
     }

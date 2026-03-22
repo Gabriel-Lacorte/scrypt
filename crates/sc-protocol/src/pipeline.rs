@@ -12,7 +12,10 @@ pub struct Pipeline {
 
 impl Pipeline {
     pub fn new(registry: SharedRegistry, max_depth: usize) -> Self {
-        Self { registry, max_depth }
+        Self {
+            registry,
+            max_depth,
+        }
     }
 
     /// Dissect a raw packet, producing a complete DissectionTree.

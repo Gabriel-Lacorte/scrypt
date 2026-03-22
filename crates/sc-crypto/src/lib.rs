@@ -21,7 +21,9 @@ pub enum CryptoError {
 
 impl From<CryptoError> for ShadowError {
     fn from(e: CryptoError) -> Self {
-        ShadowError::Crypto { message: e.to_string() }
+        ShadowError::Crypto {
+            message: e.to_string(),
+        }
     }
 }
 
@@ -77,7 +79,12 @@ impl Cipher {
     }
 
     /// Encrypt plaintext with the given key and nonce (12 bytes).
-    pub fn encrypt(&self, key: &CipherKey, nonce: &[u8], plaintext: &[u8]) -> std::result::Result<Vec<u8>, CryptoError> {
+    pub fn encrypt(
+        &self,
+        key: &CipherKey,
+        nonce: &[u8],
+        plaintext: &[u8],
+    ) -> std::result::Result<Vec<u8>, CryptoError> {
         if nonce.len() != 12 {
             return Err(CryptoError::InvalidNonceLength);
         }
@@ -87,21 +94,28 @@ impl Cipher {
                 let cipher = Aes256Gcm::new_from_slice(&key.bytes)
                     .map_err(|e| CryptoError::Encryption(e.to_string()))?;
                 let nonce = Nonce::from_slice(nonce);
-                cipher.encrypt(nonce, plaintext)
+                cipher
+                    .encrypt(nonce, plaintext)
                     .map_err(|e| CryptoError::Encryption(e.to_string()))
             }
             CipherSuite::ChaCha20Poly1305 => {
                 let cipher = ChaCha20Poly1305::new_from_slice(&key.bytes)
                     .map_err(|e| CryptoError::Encryption(e.to_string()))?;
                 let nonce = chacha20poly1305::Nonce::from_slice(nonce);
-                cipher.encrypt(nonce, plaintext)
+                cipher
+                    .encrypt(nonce, plaintext)
                     .map_err(|e| CryptoError::Encryption(e.to_string()))
             }
         }
     }
 
     /// Decrypt ciphertext with the given key and nonce (12 bytes).
-    pub fn decrypt(&self, key: &CipherKey, nonce: &[u8], ciphertext: &[u8]) -> std::result::Result<Vec<u8>, CryptoError> {
+    pub fn decrypt(
+        &self,
+        key: &CipherKey,
+        nonce: &[u8],
+        ciphertext: &[u8],
+    ) -> std::result::Result<Vec<u8>, CryptoError> {
         if nonce.len() != 12 {
             return Err(CryptoError::InvalidNonceLength);
         }
@@ -111,14 +125,16 @@ impl Cipher {
                 let cipher = Aes256Gcm::new_from_slice(&key.bytes)
                     .map_err(|e| CryptoError::Decryption(e.to_string()))?;
                 let nonce = Nonce::from_slice(nonce);
-                cipher.decrypt(nonce, ciphertext)
+                cipher
+                    .decrypt(nonce, ciphertext)
                     .map_err(|e| CryptoError::Decryption(e.to_string()))
             }
             CipherSuite::ChaCha20Poly1305 => {
                 let cipher = ChaCha20Poly1305::new_from_slice(&key.bytes)
                     .map_err(|e| CryptoError::Decryption(e.to_string()))?;
                 let nonce = chacha20poly1305::Nonce::from_slice(nonce);
-                cipher.decrypt(nonce, ciphertext)
+                cipher
+                    .decrypt(nonce, ciphertext)
                     .map_err(|e| CryptoError::Decryption(e.to_string()))
             }
         }
@@ -153,12 +169,17 @@ pub fn detect_hw_acceleration() -> Vec<&'static str> {
 
 /// HKDF key derivation.
 pub mod kdf {
+    use super::CryptoError;
     use hkdf::Hkdf;
     use sha2::Sha256;
-    use super::CryptoError;
 
     /// Derive key material using HKDF-SHA256.
-    pub fn hkdf_sha256(salt: &[u8], ikm: &[u8], info: &[u8], output_len: usize) -> std::result::Result<Vec<u8>, CryptoError> {
+    pub fn hkdf_sha256(
+        salt: &[u8],
+        ikm: &[u8],
+        info: &[u8],
+        output_len: usize,
+    ) -> std::result::Result<Vec<u8>, CryptoError> {
         let hk = Hkdf::<Sha256>::new(Some(salt), ikm);
         let mut okm = vec![0u8; output_len];
         hk.expand(info, &mut okm)
@@ -260,9 +281,9 @@ pub mod x25519 {
 
 /// TLS 1.3 key schedule functions (RFC 8446 §7.1).
 pub mod tls_kdf {
+    use super::{CipherSuite, CryptoError};
     use hkdf::Hkdf;
     use sha2::{Digest, Sha256};
-    use super::{CipherSuite, CryptoError};
 
     /// HKDF-Expand-Label as defined in RFC 8446 §7.1.
     ///
@@ -372,8 +393,9 @@ pub mod tls_kdf {
 
         let hk = Hkdf::<Sha256>::new(Some(&derived), shared_secret);
         let mut hs_secret = vec![0u8; 32];
-        hk.expand(&[], &mut hs_secret)
-            .map_err(|e| CryptoError::Encryption(format!("Failed to derive handshake secret: {e}")))?;
+        hk.expand(&[], &mut hs_secret).map_err(|e| {
+            CryptoError::Encryption(format!("Failed to derive handshake secret: {e}"))
+        })?;
         Ok(hs_secret)
     }
 

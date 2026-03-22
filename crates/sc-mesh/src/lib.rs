@@ -53,7 +53,9 @@ impl MeshService for MeshServiceImpl {
         request: Request<JoinRequest>,
     ) -> std::result::Result<Response<JoinResponse>, Status> {
         let req = request.into_inner();
-        let peer = req.peer.ok_or_else(|| Status::invalid_argument("missing peer info"))?;
+        let peer = req
+            .peer
+            .ok_or_else(|| Status::invalid_argument("missing peer info"))?;
 
         let peer_id = peer.node_id.clone();
         info!(peer_id = %peer_id, addr = %peer.address, "Peer joining mesh");
@@ -90,9 +92,7 @@ impl MeshService for MeshServiceImpl {
             warn!(node_id = %req.node_id, "Heartbeat from unknown peer");
         }
 
-        Ok(Response::new(HeartbeatResponse {
-            acknowledged: true,
-        }))
+        Ok(Response::new(HeartbeatResponse { acknowledged: true }))
     }
 
     async fn submit_task(
@@ -100,7 +100,9 @@ impl MeshService for MeshServiceImpl {
         request: Request<TaskRequest>,
     ) -> std::result::Result<Response<TaskResponse>, Status> {
         let req = request.into_inner();
-        let task = req.task.ok_or_else(|| Status::invalid_argument("missing task"))?;
+        let task = req
+            .task
+            .ok_or_else(|| Status::invalid_argument("missing task"))?;
         let task_id = task.task_id.clone();
 
         info!(task_id = %task_id, "Task submitted");
@@ -205,19 +207,16 @@ impl MeshNode {
 }
 
 /// Connect to a known peer and exchange peer lists.
-async fn connect_to_peer(
-    addr: &str,
-    node_id: &str,
-    state: &Arc<RwLock<MeshState>>,
-) -> Result<()> {
+async fn connect_to_peer(addr: &str, node_id: &str, state: &Arc<RwLock<MeshState>>) -> Result<()> {
     use proto::mesh_service_client::MeshServiceClient;
 
     let endpoint = format!("http://{addr}");
-    let mut client = MeshServiceClient::connect(endpoint)
-        .await
-        .map_err(|e| ShadowError::Network {
-            message: format!("Cannot connect to peer {addr}: {e}"),
-        })?;
+    let mut client =
+        MeshServiceClient::connect(endpoint)
+            .await
+            .map_err(|e| ShadowError::Network {
+                message: format!("Cannot connect to peer {addr}: {e}"),
+            })?;
 
     let cores = num_cpus() as u64;
     let response = client

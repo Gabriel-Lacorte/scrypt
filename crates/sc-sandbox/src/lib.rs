@@ -39,7 +39,7 @@ pub fn seccomp_supported() -> bool {
         }
         // ret == 0 means seccomp is available but not active
         // ret == 2 means seccomp filter mode already active (still supported)
-        return ret >= 0;
+        ret >= 0
     }
     #[cfg(not(target_os = "linux"))]
     {
@@ -71,7 +71,9 @@ fn uname_info() -> Option<(u32, u32)> {
 /// The on-match action for allowed syscalls is `Allow`. The default action
 /// for anything not in the allowlist is `Errno(EPERM)`.
 #[cfg(target_os = "linux")]
-fn build_seccomp_filter(profile: Profile) -> std::result::Result<seccompiler::BpfProgram, ShadowError> {
+fn build_seccomp_filter(
+    profile: Profile,
+) -> std::result::Result<seccompiler::BpfProgram, ShadowError> {
     use std::collections::HashMap;
     use std::convert::TryInto;
 
@@ -180,10 +182,8 @@ fn build_seccomp_filter(profile: Profile) -> std::result::Result<seccompiler::Bp
         message: format!("Failed to create seccomp filter: {e}"),
     })?;
 
-    let bpf: seccompiler::BpfProgram = filter.try_into().map_err(|e| {
-        ShadowError::Sandbox {
-            message: format!("Failed to compile seccomp BPF: {e:?}"),
-        }
+    let bpf: seccompiler::BpfProgram = filter.try_into().map_err(|e| ShadowError::Sandbox {
+        message: format!("Failed to compile seccomp BPF: {e:?}"),
     })?;
 
     Ok(bpf)
@@ -230,8 +230,12 @@ fn apply_landlock(allowed_dirs: &[PathBuf]) -> std::result::Result<(), ShadowErr
         | LANDLOCK_ACCESS_FS_MAKE_BLOCK
         | LANDLOCK_ACCESS_FS_MAKE_SYM;
 
-    let read_access = LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_EXECUTE;
-    let write_access = read_access | LANDLOCK_ACCESS_FS_WRITE_FILE | LANDLOCK_ACCESS_FS_MAKE_REG | LANDLOCK_ACCESS_FS_MAKE_DIR;
+    let read_access =
+        LANDLOCK_ACCESS_FS_READ_FILE | LANDLOCK_ACCESS_FS_READ_DIR | LANDLOCK_ACCESS_FS_EXECUTE;
+    let write_access = read_access
+        | LANDLOCK_ACCESS_FS_WRITE_FILE
+        | LANDLOCK_ACCESS_FS_MAKE_REG
+        | LANDLOCK_ACCESS_FS_MAKE_DIR;
 
     // Syscall numbers for Landlock
     let sys_landlock_create_ruleset: i64 = 444;
@@ -291,7 +295,9 @@ fn apply_landlock(allowed_dirs: &[PathBuf]) -> std::result::Result<(), ShadowErr
     struct FdGuard(RawFd);
     impl Drop for FdGuard {
         fn drop(&mut self) {
-            unsafe { libc::close(self.0); }
+            unsafe {
+                libc::close(self.0);
+            }
         }
     }
     let _guard = FdGuard(ruleset_fd);
@@ -306,10 +312,11 @@ fn apply_landlock(allowed_dirs: &[PathBuf]) -> std::result::Result<(), ShadowErr
             continue;
         }
 
-        let path_c = std::ffi::CString::new(dir.to_string_lossy().as_bytes())
-            .map_err(|_| ShadowError::Sandbox {
+        let path_c = std::ffi::CString::new(dir.to_string_lossy().as_bytes()).map_err(|_| {
+            ShadowError::Sandbox {
                 message: format!("Invalid path for Landlock rule: {}", dir.display()),
-            })?;
+            }
+        })?;
 
         let parent_fd = unsafe { libc::open(path_c.as_ptr(), libc::O_PATH | libc::O_CLOEXEC) };
         if parent_fd < 0 {
@@ -444,7 +451,9 @@ impl SandboxBuilder {
                 }
                 match apply_landlock(&dirs) {
                     Ok(()) => info!("Landlock filesystem isolation applied"),
-                    Err(e) => warn!(error = %e, "Failed to apply Landlock, continuing without filesystem isolation"),
+                    Err(e) => {
+                        warn!(error = %e, "Failed to apply Landlock, continuing without filesystem isolation")
+                    }
                 }
             } else {
                 warn!("Landlock not supported on this kernel, skipping filesystem isolation");

@@ -1,6 +1,6 @@
+use rayon::prelude::*;
 use sc_core::OwnedPacket;
 use sc_protocol::{DissectionTree, Pipeline, SharedRegistry};
-use rayon::prelude::*;
 
 /// An analyzed packet with both raw data and dissection results.
 #[derive(Debug, Clone)]

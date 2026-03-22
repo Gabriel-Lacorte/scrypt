@@ -38,8 +38,8 @@ impl Dissector for QuicDissector {
         // Check version field
         let version = u32::from_be_bytes([data[1], data[2], data[3], data[4]]);
         match version {
-            0x00000001 => Confidence::High,             // QUIC v1
-            0x6b3343cf => Confidence::High,             // QUIC v2
+            0x00000001 => Confidence::High, // QUIC v1
+            0x6b3343cf => Confidence::High, // QUIC v2
             v if (0xff000000..=0xff0000ff).contains(&v) => Confidence::Medium, // Drafts
             _ => Confidence::None,
         }
@@ -120,10 +120,16 @@ mod tests {
             dst_port: None,
             depth: 0,
             max_depth: 16,
-            tree: DissectionTree { top_protocol: String::new(), layers: vec![] },
+            tree: DissectionTree {
+                top_protocol: String::new(),
+                layers: vec![],
+            },
         };
 
-        assert!(matches!(dissector.can_dissect(&data, &ctx), Confidence::High));
+        assert!(matches!(
+            dissector.can_dissect(&data, &ctx),
+            Confidence::High
+        ));
     }
 
     #[test]
@@ -137,9 +143,15 @@ mod tests {
             dst_port: None,
             depth: 0,
             max_depth: 16,
-            tree: DissectionTree { top_protocol: String::new(), layers: vec![] },
+            tree: DissectionTree {
+                top_protocol: String::new(),
+                layers: vec![],
+            },
         };
 
-        assert!(matches!(dissector.can_dissect(&data, &ctx), Confidence::None));
+        assert!(matches!(
+            dissector.can_dissect(&data, &ctx),
+            Confidence::None
+        ));
     }
 }

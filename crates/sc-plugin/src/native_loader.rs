@@ -68,12 +68,14 @@ impl NativePlugin {
         };
 
         let init_fn: Symbol<PluginInitFn> = unsafe {
-            library.get(b"scrypt_plugin_init").map_err(|e| ShadowError::Plugin {
-                message: format!(
-                    "Plugin {} missing scrypt_plugin_init symbol: {e}",
-                    path.display()
-                ),
-            })?
+            library
+                .get(b"scrypt_plugin_init")
+                .map_err(|e| ShadowError::Plugin {
+                    message: format!(
+                        "Plugin {} missing scrypt_plugin_init symbol: {e}",
+                        path.display()
+                    ),
+                })?
         };
 
         let vtable_ptr = unsafe { init_fn() };
@@ -188,15 +190,17 @@ impl Dissector for NativePlugin {
         }
 
         // Find the actual JSON length (up to first null byte)
-        let json_len = output_buf.iter().position(|&b| b == 0).unwrap_or(output_buf.len());
-        let json_str = std::str::from_utf8(&output_buf[..json_len]).map_err(|_| {
-            ShadowError::Plugin {
+        let json_len = output_buf
+            .iter()
+            .position(|&b| b == 0)
+            .unwrap_or(output_buf.len());
+        let json_str =
+            std::str::from_utf8(&output_buf[..json_len]).map_err(|_| ShadowError::Plugin {
                 message: format!(
                     "Native plugin {} returned invalid UTF-8",
                     self.metadata.name
                 ),
-            }
-        })?;
+            })?;
 
         // Parse the output as a simple JSON structure
         #[derive(serde::Deserialize)]
@@ -263,6 +267,9 @@ pub fn load_native_plugins(dir: &Path) -> Vec<Arc<NativePlugin>> {
 
     let entries = match std::fs::read_dir(dir) {
         Ok(e) => e,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => {
+            return plugins;
+        }
         Err(e) => {
             warn!(dir = %dir.display(), error = %e, "Cannot read native plugin directory");
             return plugins;

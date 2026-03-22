@@ -24,7 +24,10 @@ impl PatternMatcher {
     pub fn new(patterns: Vec<Pattern>) -> Result<Self, aho_corasick::BuildError> {
         let byte_patterns: Vec<&[u8]> = patterns.iter().map(|p| p.bytes.as_slice()).collect();
         let automaton = AhoCorasick::new(&byte_patterns)?;
-        Ok(Self { automaton, patterns })
+        Ok(Self {
+            automaton,
+            patterns,
+        })
     }
 
     /// Find all matching patterns in the data, returning their names.

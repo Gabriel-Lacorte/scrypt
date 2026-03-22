@@ -18,7 +18,9 @@ pub fn format_table(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
     for pkt in packets.iter().take(limit) {
         let tree = &pkt.tree;
         let (src, dst) = extract_addresses(tree);
-        let info = tree.layers.last()
+        let info = tree
+            .layers
+            .last()
             .map(|l| l.summary.clone())
             .unwrap_or_default();
 
@@ -35,7 +37,10 @@ pub fn format_table(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
     }
 
     if limit < packets.len() {
-        out.push_str(&format!("\n... and {} more packets\n", packets.len() - limit));
+        out.push_str(&format!(
+            "\n... and {} more packets\n",
+            packets.len() - limit
+        ));
     }
 
     out
@@ -45,26 +50,30 @@ pub fn format_table(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
 pub fn format_json(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
     let limit = max.unwrap_or(packets.len()).min(packets.len());
 
-    let entries: Vec<serde_json::Value> = packets.iter().take(limit).map(|pkt| {
-        serde_json::json!({
-            "index": pkt.index + 1,
-            "timestamp": format!("{}", pkt.packet.timestamp),
-            "length": pkt.packet.data.len(),
-            "protocol": pkt.tree.top_protocol,
-            "layers": pkt.tree.layers.iter().map(|l| {
-                serde_json::json!({
-                    "protocol": l.protocol,
-                    "summary": l.summary,
-                    "fields": l.fields.iter().map(|f| {
-                        serde_json::json!({
-                            "name": f.name,
-                            "value": f.display_value,
-                        })
-                    }).collect::<Vec<_>>()
-                })
-            }).collect::<Vec<_>>()
+    let entries: Vec<serde_json::Value> = packets
+        .iter()
+        .take(limit)
+        .map(|pkt| {
+            serde_json::json!({
+                "index": pkt.index + 1,
+                "timestamp": format!("{}", pkt.packet.timestamp),
+                "length": pkt.packet.data.len(),
+                "protocol": pkt.tree.top_protocol,
+                "layers": pkt.tree.layers.iter().map(|l| {
+                    serde_json::json!({
+                        "protocol": l.protocol,
+                        "summary": l.summary,
+                        "fields": l.fields.iter().map(|f| {
+                            serde_json::json!({
+                                "name": f.name,
+                                "value": f.display_value,
+                            })
+                        }).collect::<Vec<_>>()
+                    })
+                }).collect::<Vec<_>>()
+            })
         })
-    }).collect();
+        .collect();
 
     serde_json::to_string_pretty(&entries).unwrap_or_else(|_| "[]".into())
 }
@@ -75,8 +84,11 @@ pub fn format_tree(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
     let limit = max.unwrap_or(packets.len()).min(packets.len());
 
     for pkt in packets.iter().take(limit) {
-        out.push_str(&format!("═══ Packet #{} ═══ [{} bytes] ═══\n",
-            pkt.index + 1, pkt.packet.data.len()));
+        out.push_str(&format!(
+            "═══ Packet #{} ═══ [{} bytes] ═══\n",
+            pkt.index + 1,
+            pkt.packet.data.len()
+        ));
         out.push_str(&pkt.tree.to_text());
         out.push('\n');
     }
@@ -121,7 +133,9 @@ pub fn format_csv(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
     for pkt in packets.iter().take(limit) {
         let tree = &pkt.tree;
         let (src, dst) = extract_addresses(tree);
-        let info = tree.layers.last()
+        let info = tree
+            .layers
+            .last()
             .map(|l| l.summary.clone())
             .unwrap_or_default();
 
@@ -144,11 +158,15 @@ pub fn format_csv(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
 fn extract_addresses(tree: &DissectionTree) -> (String, String) {
     for layer in &tree.layers {
         if layer.protocol == "IPv4" || layer.protocol == "IPv6" {
-            let src = layer.fields.iter()
+            let src = layer
+                .fields
+                .iter()
                 .find(|f| f.name == "Source")
                 .map(|f| f.display_value.clone())
                 .unwrap_or_else(|| "?".into());
-            let dst = layer.fields.iter()
+            let dst = layer
+                .fields
+                .iter()
                 .find(|f| f.name == "Destination")
                 .map(|f| f.display_value.clone())
                 .unwrap_or_else(|| "?".into());
@@ -157,11 +175,15 @@ fn extract_addresses(tree: &DissectionTree) -> (String, String) {
     }
     for layer in &tree.layers {
         if layer.protocol == "Ethernet" {
-            let src = layer.fields.iter()
+            let src = layer
+                .fields
+                .iter()
                 .find(|f| f.name == "Source")
                 .map(|f| f.display_value.clone())
                 .unwrap_or_else(|| "?".into());
-            let dst = layer.fields.iter()
+            let dst = layer
+                .fields
+                .iter()
                 .find(|f| f.name == "Destination")
                 .map(|f| f.display_value.clone())
                 .unwrap_or_else(|| "?".into());

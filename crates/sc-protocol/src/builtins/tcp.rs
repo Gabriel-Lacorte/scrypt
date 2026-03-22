@@ -37,16 +37,36 @@ struct TcpFlags {
 impl TcpFlags {
     fn to_string_short(&self) -> String {
         let mut s = String::with_capacity(9);
-        if self.syn { s.push('S'); }
-        if self.ack { s.push('A'); }
-        if self.fin { s.push('F'); }
-        if self.rst { s.push('R'); }
-        if self.psh { s.push('P'); }
-        if self.urg { s.push('U'); }
-        if self.ece { s.push('E'); }
-        if self.cwr { s.push('C'); }
-        if self.ns { s.push('N'); }
-        if s.is_empty() { s.push('.'); }
+        if self.syn {
+            s.push('S');
+        }
+        if self.ack {
+            s.push('A');
+        }
+        if self.fin {
+            s.push('F');
+        }
+        if self.rst {
+            s.push('R');
+        }
+        if self.psh {
+            s.push('P');
+        }
+        if self.urg {
+            s.push('U');
+        }
+        if self.ece {
+            s.push('E');
+        }
+        if self.cwr {
+            s.push('C');
+        }
+        if self.ns {
+            s.push('N');
+        }
+        if s.is_empty() {
+            s.push('.');
+        }
         s
     }
 
@@ -94,18 +114,21 @@ fn parse_tcp(input: &[u8]) -> IResult<&[u8], TcpHeader> {
     let options_len = header_len.saturating_sub(20);
     let (input, _options) = nom::bytes::complete::take(options_len)(input)?;
 
-    Ok((input, TcpHeader {
-        src_port,
-        dst_port,
-        seq_number,
-        ack_number,
-        data_offset,
-        flags,
-        window_size,
-        checksum,
-        urgent_pointer,
-        header_len,
-    }))
+    Ok((
+        input,
+        TcpHeader {
+            src_port,
+            dst_port,
+            seq_number,
+            ack_number,
+            data_offset,
+            flags,
+            window_size,
+            checksum,
+            urgent_pointer,
+            header_len,
+        },
+    ))
 }
 
 impl Dissector for TcpDissector {
@@ -130,10 +153,9 @@ impl Dissector for TcpDissector {
         data: &'a [u8],
         context: &mut DissectionContext,
     ) -> sc_core::Result<DissectedLayer<'a>> {
-        let (remaining, hdr) =
-            parse_tcp(data).map_err(|e| sc_core::ShadowError::Parse {
-                message: format!("TCP parse error: {e}"),
-            })?;
+        let (remaining, hdr) = parse_tcp(data).map_err(|e| sc_core::ShadowError::Parse {
+            message: format!("TCP parse error: {e}"),
+        })?;
 
         // Update context with port info for application-layer dissection
         context.src_port = Some(hdr.src_port);

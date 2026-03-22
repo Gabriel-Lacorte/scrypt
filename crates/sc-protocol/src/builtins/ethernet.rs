@@ -8,7 +8,9 @@ use sc_core::Protocol;
 /// Ethernet II frame dissector.
 pub struct EthernetDissector;
 
-fn parse_ethernet(input: &[u8]) -> IResult<&[u8], ((&[u8], &[u8]), u16)> {
+type EthernetFrame<'a> = ((&'a [u8], &'a [u8]), u16);
+
+fn parse_ethernet(input: &[u8]) -> IResult<&[u8], EthernetFrame<'_>> {
     let (input, dst) = take(6usize)(input)?;
     let (input, src) = take(6usize)(input)?;
     let (input, ethertype) = be_u16(input)?;

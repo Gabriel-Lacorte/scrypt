@@ -19,12 +19,15 @@ fn parse_udp(input: &[u8]) -> IResult<&[u8], UdpHeader> {
     let (input, dst_port) = be_u16(input)?;
     let (input, length) = be_u16(input)?;
     let (input, checksum) = be_u16(input)?;
-    Ok((input, UdpHeader {
-        src_port,
-        dst_port,
-        length,
-        checksum,
-    }))
+    Ok((
+        input,
+        UdpHeader {
+            src_port,
+            dst_port,
+            length,
+            checksum,
+        },
+    ))
 }
 
 impl Dissector for UdpDissector {
@@ -49,10 +52,9 @@ impl Dissector for UdpDissector {
         data: &'a [u8],
         context: &mut DissectionContext,
     ) -> sc_core::Result<DissectedLayer<'a>> {
-        let (remaining, hdr) =
-            parse_udp(data).map_err(|e| sc_core::ShadowError::Parse {
-                message: format!("UDP parse error: {e}"),
-            })?;
+        let (remaining, hdr) = parse_udp(data).map_err(|e| sc_core::ShadowError::Parse {
+            message: format!("UDP parse error: {e}"),
+        })?;
 
         context.src_port = Some(hdr.src_port);
         context.dst_port = Some(hdr.dst_port);
@@ -100,10 +102,7 @@ impl Dissector for UdpDissector {
                     field_type: FieldType::UInt16,
                 },
             ],
-            summary: format!(
-                "{} -> {}, Len={}",
-                hdr.src_port, hdr.dst_port, hdr.length
-            ),
+            summary: format!("{} -> {}, Len={}", hdr.src_port, hdr.dst_port, hdr.length),
         };
 
         Ok(DissectedLayer {

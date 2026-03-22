@@ -22,13 +22,18 @@ pub struct PluginMetadata {
 
 impl fmt::Display for PluginMetadata {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        write!(f, "{} v{} by {} [{}]",
-            self.name, self.version, self.author,
+        write!(
+            f,
+            "{} v{} by {} [{}]",
+            self.name,
+            self.version,
+            self.author,
             match self.plugin_type {
                 PluginType::Dissector => "dissector",
                 PluginType::Analyzer => "analyzer",
                 PluginType::Transform => "transform",
-            })
+            }
+        )
     }
 }
 
