@@ -9,6 +9,7 @@ use std::net::Ipv4Addr;
 /// IPv4 packet dissector.
 pub struct Ipv4Dissector;
 
+#[allow(dead_code)]
 struct Ipv4Header {
     version: u8,
     ihl: u8,
@@ -128,7 +129,7 @@ impl Dissector for Ipv4Dissector {
             remaining
         };
 
-        let base = 14; // Assuming after Ethernet — offset would be tracked properly in full impl
+        let _base = 14; // Assuming after Ethernet — offset would be tracked properly in full impl
         let node = ProtocolNode {
             protocol: "IPv4".into(),
             byte_range: 0..hdr.header_len,
@@ -180,7 +181,7 @@ impl Dissector for Ipv4Dissector {
                 },
             ],
             summary: format!(
-                "{} → {}, TTL={}, Proto={}",
+                "{} -> {}, TTL={}, Proto={}",
                 hdr.src_addr, hdr.dst_addr, hdr.ttl, ip_protocol_name(hdr.protocol)
             ),
         };

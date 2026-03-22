@@ -1,4 +1,4 @@
-use crate::traits::{Plugin, PluginContext, PluginMetadata, PluginType};
+use crate::traits::{PluginMetadata, PluginType};
 use mlua::prelude::*;
 use sc_core::{Result, ShadowError};
 use sc_protocol::*;

@@ -86,7 +86,7 @@ impl Dissector for EthernetDissector {
                 },
             ],
             summary: format!(
-                "{} → {}, Type: {ethertype_label}",
+                "{} -> {}, Type: {ethertype_label}",
                 format_mac(src),
                 format_mac(dst)
             ),

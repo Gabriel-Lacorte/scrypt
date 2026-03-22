@@ -38,7 +38,7 @@ pub enum Commands {
         #[arg(short, long)]
         filter: Option<String>,
 
-        /// Output format: table, json, tree
+        /// Output format: table, json, jsonl, csv, tree
         #[arg(short = 'F', long, default_value = "table")]
         format: String,
 

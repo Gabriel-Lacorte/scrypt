@@ -84,6 +84,63 @@ pub fn format_tree(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
     out
 }
 
+pub fn format_jsonl(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
+    let limit = max.unwrap_or(packets.len()).min(packets.len());
+    let mut out = String::new();
+
+    for pkt in packets.iter().take(limit) {
+        let (src, dst) = extract_addresses(&pkt.tree);
+        let entry = serde_json::json!({
+            "index": pkt.index + 1,
+            "timestamp": format!("{}", pkt.packet.timestamp),
+            "length": pkt.packet.data.len(),
+            "protocol": pkt.tree.top_protocol,
+            "source": src,
+            "destination": dst,
+            "layers": pkt.tree.layers.iter().map(|l| {
+                serde_json::json!({
+                    "protocol": l.protocol,
+                    "summary": l.summary,
+                    "fields": l.fields.iter().map(|f| {
+                        serde_json::json!({ "name": f.name, "value": f.display_value })
+                    }).collect::<Vec<_>>()
+                })
+            }).collect::<Vec<_>>()
+        });
+        out.push_str(&serde_json::to_string(&entry).unwrap_or_default());
+        out.push('\n');
+    }
+
+    out
+}
+
+pub fn format_csv(packets: &[AnalyzedPacket], max: Option<usize>) -> String {
+    let limit = max.unwrap_or(packets.len()).min(packets.len());
+    let mut out = String::from("No,Timestamp,Source,Destination,Protocol,Length,Info\n");
+
+    for pkt in packets.iter().take(limit) {
+        let tree = &pkt.tree;
+        let (src, dst) = extract_addresses(tree);
+        let info = tree.layers.last()
+            .map(|l| l.summary.clone())
+            .unwrap_or_default();
+
+        let info_escaped = info.replace('"', "\"\"");
+        out.push_str(&format!(
+            "{},{},{},{},{},{},\"{}\"\n",
+            pkt.index + 1,
+            pkt.packet.timestamp,
+            src,
+            dst,
+            tree.top_protocol,
+            pkt.packet.data.len(),
+            info_escaped,
+        ));
+    }
+
+    out
+}
+
 fn extract_addresses(tree: &DissectionTree) -> (String, String) {
     for layer in &tree.layers {
         if layer.protocol == "IPv4" || layer.protocol == "IPv6" {

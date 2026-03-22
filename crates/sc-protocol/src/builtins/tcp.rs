@@ -7,6 +7,7 @@ use sc_core::Protocol;
 /// TCP segment dissector.
 pub struct TcpDissector;
 
+#[allow(dead_code)]
 struct TcpHeader {
     src_port: u16,
     dst_port: u16,
@@ -189,7 +190,7 @@ impl Dissector for TcpDissector {
                 },
             ],
             summary: format!(
-                "{} → {} [{flags_str}] Seq={} Ack={} Win={}",
+                "{} -> {} [{flags_str}] Seq={} Ack={} Win={}",
                 hdr.src_port, hdr.dst_port, hdr.seq_number, hdr.ack_number, hdr.window_size
             ),
         };

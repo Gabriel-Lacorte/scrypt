@@ -1760,6 +1760,7 @@ dependencies = [
  "sc-core",
  "sc-protocol",
  "serde",
+ "serde_json",
  "thiserror 2.0.18",
  "tracing",
 ]
@@ -1793,11 +1794,14 @@ dependencies = [
 name = "sc-tls"
 version = "0.1.0"
 dependencies = [
+ "aes-gcm",
+ "chacha20poly1305",
  "nom",
  "sc-core",
  "sc-crypto",
  "sc-protocol",
  "serde",
+ "sha2",
  "thiserror 2.0.18",
  "tracing",
  "x509-parser",

@@ -101,7 +101,7 @@ impl Dissector for UdpDissector {
                 },
             ],
             summary: format!(
-                "{} → {}, Len={}",
+                "{} -> {}, Len={}",
                 hdr.src_port, hdr.dst_port, hdr.length
             ),
         };

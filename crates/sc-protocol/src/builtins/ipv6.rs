@@ -9,6 +9,7 @@ use std::net::Ipv6Addr;
 /// IPv6 packet dissector.
 pub struct Ipv6Dissector;
 
+#[allow(dead_code)]
 struct Ipv6Header {
     version: u8,
     traffic_class: u8,
@@ -144,7 +145,7 @@ impl Dissector for Ipv6Dissector {
                 },
             ],
             summary: format!(
-                "{} → {}, Hop Limit={}, Next={}",
+                "{} -> {}, Hop Limit={}, Next={}",
                 hdr.src_addr, hdr.dst_addr, hdr.hop_limit, hdr.next_header
             ),
         };

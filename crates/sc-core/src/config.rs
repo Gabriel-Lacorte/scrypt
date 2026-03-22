@@ -16,6 +16,8 @@ pub struct Config {
     pub mesh: MeshConfig,
     #[serde(default)]
     pub tui: TuiConfig,
+    #[serde(default)]
+    pub alerts: Vec<AlertRule>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,6 +98,34 @@ pub struct TuiConfig {
     pub refresh_rate_ms: u64,
 }
 
+/// An alert rule that flags matching packets in the TUI and analysis output.
+///
+/// Alert rules are evaluated against each dissected packet. When matched, the
+/// packet is highlighted in the TUI and the alert message is included in
+/// structured output.
+///
+/// # Configuration Example
+///
+/// ```toml
+/// [[alerts]]
+/// name = "suspicious-port"
+/// filter = "port:4444"
+/// severity = "high"
+/// message = "Connection to suspicious port 4444"
+/// ```
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AlertRule {
+    /// Human-readable rule name.
+    pub name: String,
+    /// Filter expression (same syntax as TUI display filter).
+    pub filter: String,
+    /// Severity level: "info", "warning", "high", "critical".
+    #[serde(default = "default_alert_severity")]
+    pub severity: String,
+    /// Message displayed when the rule matches.
+    pub message: String,
+}
+
 // Default value functions
 
 fn default_log_level() -> String {
@@ -148,6 +178,10 @@ fn default_theme() -> String {
 
 fn default_refresh_rate() -> u64 {
     100
+}
+
+fn default_alert_severity() -> String {
+    "info".into()
 }
 
 impl Default for Config {

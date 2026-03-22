@@ -1,6 +1,7 @@
 pub mod ethernet;
 pub mod ipv4;
 pub mod ipv6;
+pub mod quic;
 pub mod tcp;
 pub mod udp;
 
@@ -20,4 +21,9 @@ pub fn register_all(registry: &mut DissectorRegistry) {
     // Transport layer
     registry.register_for_protocol(Protocol::Tcp, Arc::new(tcp::TcpDissector));
     registry.register_for_protocol(Protocol::Udp, Arc::new(udp::UdpDissector));
+
+    // Application layer
+    registry.register_for_protocol(Protocol::Quic, Arc::new(quic::QuicDissector));
+    // QUIC also on common UDP ports
+    registry.register_for_port(443, Arc::new(quic::QuicDissector));
 }

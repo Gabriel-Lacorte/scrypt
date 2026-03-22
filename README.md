@@ -78,13 +78,28 @@ end
 
 | Key | Action |
 |-----|--------|
-| `j`/`k` | Navigate up/down |
-| `Tab` | Switch pane |
+| `j`/`k`/`↓`/`↑` | Navigate up/down (scroll hex in Hex Dump pane) |
+| `Tab` | Switch pane (Packet List -> Protocol Tree -> Hex Dump) |
 | `/` | Enter filter mode |
 | `Enter` | Apply filter |
 | `Esc` | Cancel filter / Exit |
-| `g`/`G` | Jump to first/last |
+| `g`/`G` | Jump to first/last (or top/bottom of hex) |
 | `q` | Quit |
+
+### Display Filters
+
+The filter bar supports BPF-style expressions:
+
+| Expression | Meaning |
+|------------|---------|
+| `tcp` | Show only TCP packets |
+| `udp` | Show only UDP packets |
+| `tls` | Show only TLS packets |
+| `port:443` | Match source or destination port |
+| `ip.src==10.0.0.1` | Match source IP address |
+| `ip.dst==192.168.1.1` | Match destination IP address |
+| `field:example.com` | Search all field values |
+| `dns` | Plain text search across protocols, summaries, fields |
 
 ## Requirements
 

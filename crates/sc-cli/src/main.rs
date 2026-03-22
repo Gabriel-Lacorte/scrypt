@@ -97,6 +97,8 @@ fn cmd_analyze(
 
     let output = match format {
         "json" => output::format_json(&analyzed, max_packets),
+        "jsonl" => output::format_jsonl(&analyzed, max_packets),
+        "csv" => output::format_csv(&analyzed, max_packets),
         "tree" => output::format_tree(&analyzed, max_packets),
         _ => output::format_table(&analyzed, max_packets),
     };
@@ -194,31 +196,32 @@ async fn cmd_mesh(config: &Config, action: MeshAction) -> anyhow::Result<()> {
 }
 
 fn cmd_info(config: &Config) {
-    println!("╔══════════════════════════════════════════╗");
-    println!("║       $crypt Framework v{}        ║", env!("CARGO_PKG_VERSION"));
-    println!("╠══════════════════════════════════════════╣");
+    println!("--------------------------------------------");
+    println!("       $crypt Framework v{}", env!("CARGO_PKG_VERSION"));
+    println!("--------------------------------------------");
 
     // Hardware acceleration
     let hw = sc_crypto::detect_hw_acceleration();
-    println!("║ Hardware Acceleration:                    ║");
+    println!("Hardware Acceleration:");
     if hw.is_empty() {
-        println!("║   None detected                          ║");
+        println!("  None detected");
     } else {
         for feat in &hw {
-            println!("║   ✓ {feat:<36} ║");
+            println!("  ✓ {feat}");
+
         }
     }
 
     // Sandbox capabilities
-    println!("║ Sandbox:                                 ║");
+    println!("Sandbox:");
     for cap in sc_sandbox::capabilities_report() {
-        println!("║   {cap:<38} ║");
+        println!("  {cap}");
     }
 
     // Config
-    println!("║ Configuration:                           ║");
-    println!("║   Max depth: {:<27} ║", config.general.max_dissection_depth);
-    println!("║   Log level: {:<27} ║", config.general.log_level);
+    println!("Configuration:");
+    println!("  Max depth: {}", config.general.max_dissection_depth);
+    println!("  Log level: {}", config.general.log_level);
 
-    println!("╚══════════════════════════════════════════╝");
+    println!("--------------------------------------------");
 }

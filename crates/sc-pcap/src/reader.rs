@@ -17,7 +17,7 @@ impl PcapReader {
 
         info!(path = %path.display(), bytes = data.len(), "Reading PCAP file");
 
-        let mut packets = Vec::new();
+        let packets;
 
         // Try PCAP format first, then PCAPNG
         match Self::parse_pcap(&data) {
